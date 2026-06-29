@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in — BeanSense</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="icon" href="/img/logo.png" type="image/png" />
+</head>
+
+<body class="login-body">
+  <div class="login-page">
+    <!-- ========== PANEL KIRI ========== -->
+    <div class="login-left">
+      <div class="login-brand">
+        <img src="/img/logo.png" alt="BeanSense Logo" class="login-logo" />
+        <span class="login-brand-name">BeanSense</span>
+      </div>
+      <div class="login-left-content">
+        <span class="login-badge">
+          <span class="login-badge-dot"></span>
+          Sistem IoT Aktif
+        </span>
+        <h1 class="login-headline">Sistem Cerdas Penyortiran Kopi</h1>
+        <p class="login-description">
+          Pantau kualitas pascapanen secara real-time. Otomatisasi
+          pemisahan biji kopi matang dan reject untuk hasil yang lebih
+          konsisten.
+        </p>
+      </div>
+    </div>
+
+    <!-- ========== PANEL KANAN (FORM) ========== -->
+    <div class="login-right">
+      <div class="login-card">
+        <div class="login-card-header">
+          <h2>Sign in</h2>
+          <a href="/index.html" class="login-back">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            Back
+          </a>
+        </div>
+        <p class="login-subtitle">Welcome back to BeanSense</p>
+
+        <!-- Alert error -->
+        <div class="login-alert-error" id="loginError" style="display:none"></div>
+
+        <form class="login-form" id="loginForm">
+          <div class="form-group">
+            <label for="loginUsername">Username</label>
+            <div class="input-icon-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8" />
+                <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" stroke-width="1.8"
+                  stroke-linecap="round" />
+              </svg>
+              <input type="text" id="loginUsername" name="username" class="login-input"
+                placeholder="Masukkan username Anda" required autofocus />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <div class="input-icon-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="1.8" />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.8" />
+              </svg>
+              <input type="password" id="loginPassword" name="password" class="login-input"
+                placeholder="********" required />
+              <button type="button" class="login-toggle-pw" id="togglePassword" aria-label="Tampilkan password">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" stroke="currentColor" stroke-width="1.8"
+                    stroke-linejoin="round" />
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="login-row">
+            <label class="login-checkbox">
+              <input type="checkbox" id="rememberMe" />
+              <span>Remember me</span>
+            </label>
+            <a href="#" class="login-forgot">Forgot Password?</a>
+          </div>
+
+          <button type="submit" class="login-submit" id="loginBtn">Sign in</button>
+        </form>
+
+        <div class="login-divider"></div>
+
+        <p class="login-footer-text">
+          Belum punya akun?
+          <span class="login-footer-link" id="btnHubungiAdmin" style="cursor:pointer;">Hubungi Administrator</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MODAL HUBUNGI ADMIN ========== -->
+  <div class="modal-overlay" id="requestModalOverlay" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Permintaan Akun Baru</h3>
+        <button type="button" class="modal-close" id="requestModalClose" aria-label="Tutup">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <p style="color:#7a6652; font-size:0.9rem; margin-bottom:16px;">
+        Isi form berikut. Admin akan segera membuatkan akun untuk Anda.
+      </p>
+
+      <!-- Alert dalam modal -->
+      <div id="requestAlert" style="display:none; margin-bottom:12px;"></div>
+
+      <div class="modal-form">
+        <div class="form-group">
+          <label for="reqNama">Nama Lengkap</label>
+          <input type="text" id="reqNama" class="form-input" placeholder="Contoh: Budi Santoso" />
+        </div>
+        <div class="form-group">
+          <label for="reqUsername">Username yang diinginkan</label>
+          <input type="text" id="reqUsername" class="form-input" placeholder="Contoh: budi.santoso" />
+        </div>
+        <div class="form-group">
+          <label for="reqEmail">Email</label>
+          <input type="email" id="reqEmail" class="form-input" placeholder="budi@example.com" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="requestModalCancel">Batal</button>
+          <button type="button" class="btn-primary" id="requestModalSend">Kirim Permintaan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/login.js"></script>
+  <script>
+    // Kalau sudah login, langsung ke dashboard
+    if (Auth.isLoggedIn()) {
+      window.location.href = '/admin/dashboard.html';
+    }
+
+    // ---- Login form ----
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const btn = document.getElementById('loginBtn');
+      const errorEl = document.getElementById('loginError');
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+      errorEl.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          Auth.save(data.token, {
+            id: data.id,
+            nama: data.nama,
+            username: data.username,
+            role: data.role
+          });
+          window.location.href = '/admin/dashboard.html';
+        } else {
+          errorEl.textContent = 'Username atau password salah. Silakan coba lagi.';
+          errorEl.style.display = 'block';
+        }
+      } catch (err) {
+        errorEl.textContent = 'Tidak dapat terhubung ke server. Coba beberapa saat lagi.';
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
+      }
+    });
+
+    // ---- Modal Hubungi Admin ----
+    const overlay     = document.getElementById('requestModalOverlay');
+    const alertBox    = document.getElementById('requestAlert');
+
+    function openModal()  { overlay.style.display = 'flex'; alertBox.style.display = 'none'; }
+    function closeModal() {
+      overlay.style.display = 'none';
+      document.getElementById('reqNama').value     = '';
+      document.getElementById('reqUsername').value = '';
+      document.getElementById('reqEmail').value    = '';
+      alertBox.style.display = 'none';
+    }
+
+    function showAlert(msg, type = 'success') {
+      alertBox.className  = type === 'success' ? 'alert-success' : 'alert-error';
+      alertBox.textContent = msg;
+      alertBox.style.display = '';
+    }
+
+    document.getElementById('btnHubungiAdmin').addEventListener('click', openModal);
+    document.getElementById('requestModalClose').addEventListener('click', closeModal);
+    document.getElementById('requestModalCancel').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    document.getElementById('requestModalSend').addEventListener('click', async function () {
+      const nama     = document.getElementById('reqNama').value.trim();
+      const username = document.getElementById('reqUsername').value.trim();
+      const email    = document.getElementById('reqEmail').value.trim();
+
+      if (!nama || !username || !email) {
+        showAlert('Semua field wajib diisi.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('requestModalSend');
+      btn.disabled = true;
+      btn.textContent = 'Mengirim...';
+
+      try {
+        const res = await fetch('/api/notification/request-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nama, username, email })
+        });
+
+        if (res.ok) {
+          showAlert('Permintaan berhasil dikirim! Admin akan segera menghubungi Anda.');
+          setTimeout(closeModal, 3000);
+        } else {
+          showAlert('Gagal mengirim permintaan. Coba lagi.', 'error');
+        }
+      } catch (err) {
+        showAlert('Tidak dapat terhubung ke server.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Kirim Permintaan';
+      }
+    });
+  </script>
+</body>
+
+</html>

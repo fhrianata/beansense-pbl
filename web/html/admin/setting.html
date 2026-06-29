@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pengaturan — BeanSense Admin</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+    <link rel="icon" href="/img/logo.png" type="image/png" />
+</head>
+
+<body class="admin-layout">
+    <!-- Sidebar di-inject oleh admin-layout.js -->
+
+    <main class="admin-content">
+        <!-- ========== TOPBAR ========== -->
+        <header class="admin-topbar">
+            <div>
+                <h1 class="admin-page-title">Pengaturan</h1>
+                <p class="admin-page-subtitle">Konfigurasi umum sistem BeanSense</p>
+            </div>
+            <div class="admin-topbar-right">
+                <div class="status-badge">
+                    <span class="status-dot"></span>
+                    <span>Status Connected</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-body">
+            <!-- Alert pesan sukses/error -->
+            <div id="alertBox" style="display:none; margin-bottom:16px;"></div>
+
+            <!-- ========== FORM PENGATURAN ========== -->
+            <div class="settings-card">
+
+                <!-- Informasi Alat -->
+                <div class="settings-card-header">
+                    <div class="settings-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8" />
+                            <path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3>Informasi Alat</h3>
+                        <p>Identitas perangkat IoT yang digunakan</p>
+                    </div>
+                </div>
+
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label for="namaAlat">Nama Alat</label>
+                        <input type="text" id="namaAlat" class="form-input" placeholder="Contoh: BeanSense Node-01"
+                            value="BeanSense Node-01" />
+                        <p class="form-hint">Nama ini akan ditampilkan di header sistem &amp; log aktivitas.</p>
+                    </div>
+
+                    <div class="settings-divider"></div>
+
+                    <!-- Interval Refresh -->
+                    <div class="settings-card-header">
+                        <div class="settings-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+                                <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3>Interval Refresh Data</h3>
+                            <p>Frekuensi pembaruan data di halaman Monitoring</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="refreshInterval">Interval (detik)</label>
+                        <div class="input-with-suffix">
+                            <input type="number" id="refreshInterval" class="form-input" min="1" max="60" step="1"
+                                value="2" />
+                            <span class="input-suffix">detik</span>
+                        </div>
+                        <p class="form-hint">Disarankan 2–5 detik untuk pemantauan real-time yang stabil.</p>
+                    </div>
+
+                    <div class="settings-divider"></div>
+
+                    <!-- API URL -->
+                    <div class="settings-card-header">
+                        <div class="settings-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" />
+                                <path
+                                    d="M2 12h20M12 2c2.5 2.7 4 6.3 4 10s-1.5 7.3-4 10c-2.5-2.7-4-6.3-4-10s1.5-7.3 4-10Z"
+                                    stroke="currentColor" stroke-width="1.8" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3>API Gateway / Backend</h3>
+                            <p>URL endpoint sumber data sensor</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="apiUrl">URL API</label>
+                        <input type="text" id="apiUrl" class="form-input"
+                            placeholder="http://localhost:9000/api/monitoring/latest"
+                            value="http://localhost:9000/api/monitoring/latest" />
+                        <p class="form-hint">Endpoint ini dipakai oleh halaman Monitoring untuk polling data real-time.
+                        </p>
+                    </div>
+
+                    <div class="settings-footer">
+                        <button type="button" class="btn-secondary" id="btnReset">Batal</button>
+                        <button type="button" class="btn-primary" id="btnSave">Simpan Pengaturan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        Auth.requireLogin();
+    </script>
+    <script src="/js/admin-layout.js"></script>
+    <script>
+        // =============================================
+        // SETTING PAGE — Simpan ke localStorage
+        // (pengganti app-settings.properties dari Spring)
+        // =============================================
+        (function () {
+            const SETTINGS_KEY = 'bs_settings';
+
+            const elNama = document.getElementById('namaAlat');
+            const elInterval = document.getElementById('refreshInterval');
+            const elApiUrl = document.getElementById('apiUrl');
+            const alertBox = document.getElementById('alertBox');
+
+            // ---- Load settings dari localStorage ----
+            function loadSettings() {
+                try {
+                    const raw = localStorage.getItem(SETTINGS_KEY);
+                    if (!raw) return;
+                    const s = JSON.parse(raw);
+                    if (s.namaAlat) elNama.value = s.namaAlat;
+                    if (s.refreshInterval) elInterval.value = s.refreshInterval;
+                    if (s.apiUrl) elApiUrl.value = s.apiUrl;
+                } catch (e) {
+                    console.warn('Gagal membaca settings:', e);
+                }
+            }
+
+            // ---- Simpan settings ke localStorage ----
+            function saveSettings() {
+                const namaAlat = elNama.value.trim() || 'BeanSense Node-01';
+                const refreshInterval = parseInt(elInterval.value, 10) || 2;
+                const apiUrl = elApiUrl.value.trim() || 'http://localhost:9000/api/monitoring/latest';
+
+                if (refreshInterval < 1 || refreshInterval > 60) {
+                    showAlert('Interval harus antara 1 sampai 60 detik.', 'error');
+                    return;
+                }
+
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify({ namaAlat, refreshInterval, apiUrl }));
+                showAlert('Pengaturan berhasil disimpan.');
+            }
+
+            function resetSettings() {
+                loadSettings(); // reload dari localStorage (batalkan perubahan yang belum disimpan)
+            }
+
+            function showAlert(msg, type = 'success') {
+                alertBox.className = type === 'success' ? 'alert-success' : 'alert-error';
+                alertBox.textContent = msg;
+                alertBox.style.display = '';
+                setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+            }
+
+            document.getElementById('btnSave').addEventListener('click', saveSettings);
+            document.getElementById('btnReset').addEventListener('click', resetSettings);
+
+            loadSettings();
+        })();
+    </script>
+</body>
+
+</html>

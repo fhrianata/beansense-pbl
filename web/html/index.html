@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BeanSense — Sistem Penyortiran Buah Kopi</title>
+  <meta name="description"
+    content="BeanSense - Sistem penyortiran buah kopi otomatis berbasis IoT menggunakan sensor RGB dan Load Cell terintegrasi cloud." />
+
+  <!-- Bootstrap CSS (offline) -->
+  <link rel="stylesheet" href="../css/bootstrap.min.css" />
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="../css/style.css" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="../img/logo.png" type="image/png" />
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg sticky-top" id="mainNavbar">
+    <div class="container-fluid px-4 px-lg-5">
+      <!-- Brand -->
+      <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+        <img src="../img/logo.png" alt="BeanSense Logo" class="navbar-logo" />
+        <span class="brand-name">BeanSense</span>
+      </a>
+
+      <!-- Toggler mobile -->
+      <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
+        data-bs-target="#navbarMenu" aria-controls="navbarMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <!-- Links -->
+      <div class="collapse navbar-collapse" id="navbarMenu">
+        <ul class="navbar-nav mx-auto gap-lg-2">
+          <li class="nav-item">
+            <a class="nav-link nav-scroll" href="#hero">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-scroll" href="#tentang-alat">Tentang Alat</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-scroll" href="#cara-kerja">Cara Kerja</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-scroll" href="#tim">Tim</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-scroll" href="#about">About</a>
+          </li>
+        </ul>
+
+        <!-- Auth -->
+        <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+          <a href="login.html" class="btn-signin">Sign in</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========== HERO ========== -->
+  <section id="hero" class="section-hero">
+    <div class="container hero-container">
+      <div class="hero-text">
+        <h1 class="hero-title">
+          <span class="text-dark-brown">Sistem</span><br />
+          <span class="text-dark-brown">Penyortiran</span><br />
+          <span class="text-mid-brown">Buah Kopi</span><br />
+          <span class="text-dark-brown">Berbasis IoT</span>
+        </h1>
+        <p class="hero-desc">
+          Transformasi digital perkebunan kopi Anda dengan monitoring
+          real-time. Deteksi tingkat kematangan otomatis menggunakan sensor
+          RGB dan Load Cell terintegrasi cloud.
+        </p>
+        <div class="d-flex gap-3 flex-wrap">
+          <a href="#tentang-alat" class="btn-primary-bs">Lihat Data Panen</a>
+          <a href="login.html" class="btn-secondary-bs">Masuk Sistem</a>
+        </div>
+      </div>
+
+      <div class="hero-img-side">
+        <div class="hero-img-card">
+          <img src="../img/kopi.png" alt="Alat Sortir Kopi" class="hero-img" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== TENTANG ALAT ========== -->
+  <section id="tentang-alat" class="section-white">
+    <div class="container">
+      <p class="section-eyebrow">Perangkat</p>
+      <h2 class="section-title">Tentang Alat</h2>
+      <p class="section-desc">
+        BeanSense menggunakan ESP32 sebagai mikrokontroller utama yang
+        terhubung dengan sensor TCS3200 untuk membaca warna buah kopi secara
+        akurat. Sensor infrared mendeteksi kehadiran buah dan menghitung total
+        buah yang masuk, sementara motor servo mengarahkan buah ke wadah yang
+        sesuai hasil klasifikasi.
+      </p>
+      <div class="row g-4 mt-2">
+        <div class="col-12 col-md-6 col-lg-3">
+          <div class="feature-card">
+            <div class="feature-icon">🔲</div>
+            <h5 class="feature-title">ESP32</h5>
+            <p class="feature-desc">
+              Mikrokontroller utama pengolah data sensor dan pengendali
+              sistem.
+            </p>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <div class="feature-card">
+            <div class="feature-icon">🎨</div>
+            <h5 class="feature-title">TCS3200</h5>
+            <p class="feature-desc">
+              Sensor warna RGB untuk mendeteksi tingkat kematangan buah kopi.
+            </p>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <div class="feature-card">
+            <div class="feature-icon">📡</div>
+            <h5 class="feature-title">Infrared</h5>
+            <p class="feature-desc">
+              Mendeteksi kehadiran buah dan menghitung total buah yang masuk.
+            </p>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <div class="feature-card">
+            <div class="feature-icon">⚙️</div>
+            <h5 class="feature-title">Motor Servo</h5>
+            <p class="feature-desc">
+              Menggerakkan sortir buah ke wadah sesuai hasil klasifikasi.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CARA KERJA ========== -->
+  <section id="cara-kerja" class="section-bg">
+    <div class="container">
+      <p class="section-eyebrow">Proses</p>
+      <h2 class="section-title">Cara Kerja</h2>
+      <p class="section-desc">
+        Sistem bekerja secara otomatis mulai dari deteksi buah hingga
+        pengiriman laporan harian.
+      </p>
+      <div class="row g-4 mt-2">
+        <div class="col-12 col-md-4">
+          <div class="step-card">
+            <span class="step-number">01</span>
+            <h5 class="step-title">Deteksi Buah</h5>
+            <p class="step-desc">
+              Sensor infrared mendeteksi buah kopi yang masuk ke konveyor dan
+              memicu sistem berjalan.
+            </p>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="step-card">
+            <span class="step-number">02</span>
+            <h5 class="step-title">Klasifikasi Warna</h5>
+            <p class="step-desc">
+              TCS3200 membaca nilai RGB dan Fuzzy Sugeno mengklasifikasikan
+              buah menjadi Matang, Belum Matang, atau Busuk.
+            </p>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="step-card">
+            <span class="step-number">03</span>
+            <h5 class="step-title">Sortir &amp; Laporan</h5>
+            <p class="step-desc">
+              Motor servo mengarahkan buah ke wadah yang sesuai, data dikirim
+              ke server dan laporan harian dikirim otomatis.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== TIM ========== -->
+  <section id="tim" class="section-white">
+    <div class="container">
+      <p class="section-eyebrow">Kelompok</p>
+      <h2 class="section-title">Tim Kami</h2>
+      <p class="section-desc">
+        Dikembangkan oleh mahasiswa D3 Teknik Komputer sebagai Project Base
+        Learning.
+      </p>
+    </div>
+
+    <!-- Carousel -->
+    <div class="tim-carousel-wrapper">
+      <div class="tim-track" id="timTrack">
+        <!-- Card 1 -->
+        <div class="tim-slide" data-index="0">
+          <div class="tim-card">
+            <div class="tim-photo-wrap">
+              <svg class="tim-photo-icon" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="40" cy="30" r="18" fill="#c8a98a" opacity="0.6" />
+                <ellipse cx="40" cy="72" rx="28" ry="18" fill="#c8a98a" opacity="0.4" />
+              </svg>
+            </div>
+            <h6 class="tim-name">Nauval Hilmi Hakim</h6>
+            <p class="tim-role">Frontend &amp; UI/UX</p>
+            <p class="tim-nim">NIM: 2401082011</p>
+            <a href="https://www.instagram.com/sinooopall/" target="_blank" rel="noopener" class="tim-ig-btn"
+              aria-label="Instagram Anggota 1">
+              <svg class="tim-ig-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="1.8" />
+                <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8" />
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+              </svg>
+              <span>Instagram</span>
+            </a>
+          </div>
+        </div>
+        <!-- Card 2 -->
+        <div class="tim-slide" data-index="1">
+          <div class="tim-card">
+            <div class="tim-photo-wrap">
+              <svg class="tim-photo-icon" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="40" cy="30" r="18" fill="#c8a98a" opacity="0.6" />
+                <ellipse cx="40" cy="72" rx="28" ry="18" fill="#c8a98a" opacity="0.4" />
+              </svg>
+            </div>
+            <h6 class="tim-name">Fachri Putra Anata</h6>
+            <p class="tim-role">Backend &amp; Database</p>
+            <p class="tim-nim">NIM: 2401082016</p>
+            <a href="https://www.instagram.com/fahrianata_/" target="_blank" rel="noopener" class="tim-ig-btn"
+              aria-label="Instagram Anggota 2">
+              <svg class="tim-ig-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="1.8" />
+                <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8" />
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+              </svg>
+              <span>Instagram</span>
+            </a>
+          </div>
+        </div>
+        <!-- Card 3 -->
+        <div class="tim-slide" data-index="2">
+          <div class="tim-card">
+            <div class="tim-photo-wrap">
+              <svg class="tim-photo-icon" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="40" cy="30" r="18" fill="#c8a98a" opacity="0.6" />
+                <ellipse cx="40" cy="72" rx="28" ry="18" fill="#c8a98a" opacity="0.4" />
+              </svg>
+            </div>
+            <h6 class="tim-name">Tahfizh Habibie</h6>
+            <p class="tim-role">IoT &amp; Hardware</p>
+            <p class="tim-nim">NIM: 240108xxxx</p>
+            <a href="https://www.instagram.com/rasskafes/" target="_blank" rel="noopener" class="tim-ig-btn"
+              aria-label="Instagram Anggota 3">
+              <svg class="tim-ig-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="1.8" />
+                <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8" />
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+              </svg>
+              <span>Instagram</span>
+            </a>
+          </div>
+        </div>
+        <!-- Card 4 -->
+        <div class="tim-slide" data-index="3">
+          <div class="tim-card">
+            <div class="tim-photo-wrap">
+              <svg class="tim-photo-icon" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="40" cy="30" r="18" fill="#c8a98a" opacity="0.6" />
+                <ellipse cx="40" cy="72" rx="28" ry="18" fill="#c8a98a" opacity="0.4" />
+              </svg>
+            </div>
+            <h6 class="tim-name">Junzi Fajri</h6>
+            <p class="tim-role">Server &amp; Security</p>
+            <p class="tim-nim">NIM: 2401082005</p>
+            <a href="https://instagram.com/jfnew24/" target="_blank" rel="noopener" class="tim-ig-btn"
+              aria-label="Instagram Anggota 4">
+              <svg class="tim-ig-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="1.8" />
+                <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8" />
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+              </svg>
+              <span>Instagram</span>
+            </a>
+          </div>
+        </div>
+        <!-- Card 5 -->
+        <div class="tim-slide" data-index="4">
+          <div class="tim-card">
+            <div class="tim-photo-wrap">
+              <svg class="tim-photo-icon" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="40" cy="30" r="18" fill="#c8a98a" opacity="0.6" />
+                <ellipse cx="40" cy="72" rx="28" ry="18" fill="#c8a98a" opacity="0.4" />
+              </svg>
+            </div>
+            <h6 class="tim-name">Jasmine Zainal</h6>
+            <p class="tim-role">Networking &amp; Admin</p>
+            <p class="tim-nim">NIM: 2401083005</p>
+            <a href="https://www.instagram.com/jasmiineeyy/" target="_blank" rel="noopener" class="tim-ig-btn"
+              aria-label="Instagram Anggota 5">
+              <svg class="tim-ig-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="1.8" />
+                <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8" />
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+              </svg>
+              <span>Instagram</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nav buttons -->
+      <button class="tim-nav tim-prev" id="timPrev" aria-label="Previous">&#8592;</button>
+      <button class="tim-nav tim-next" id="timNext" aria-label="Next">&#8594;</button>
+    </div>
+
+    <!-- Dots -->
+    <div class="tim-dots" id="timDots"></div>
+  </section>
+
+  <!-- ========== ABOUT ========== -->
+  <section id="about" class="section-bg">
+    <div class="container">
+      <p class="section-eyebrow">Tentang</p>
+      <h2 class="section-title">About BeanSense</h2>
+      <p class="section-desc">
+        BeanSense adalah sistem penyortiran buah kopi otomatis berbasis IoT
+        yang dikembangkan sebagai proyek akhir semester D3 Teknik Komputer.
+        Sistem ini mengintegrasikan empat mata kuliah yaitu IoT, Microservice,
+        Administrasi Jaringan, dan Keamanan Komputer dalam satu platform
+        terpadu yang siap digunakan di perkebunan kopi skala kecil hingga
+        menengah.
+      </p>
+      <div class="d-flex gap-3 justify-content-center flex-wrap mt-4">
+        <a href="login.html" class="btn-primary-bs">Mulai Sekarang</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="site-footer">
+    <div class="container">
+      <p class="footer-brand">BeanSense</p>
+      <p class="footer-copy">
+        © 2025 BeanSense. D3 Teknik Komputer — Project Base Learning.
+      </p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS (offline) -->
+  <script src="../js/bootstrap.bundle.min.js"></script>
+
+  <!-- Smooth scroll + carousel -->
+  <script src="../js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User — BeanSense Admin</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+    <link rel="icon" href="/img/logo.png" type="image/png" />
+</head>
+
+<body class="admin-layout">
+    <!-- Sidebar di-inject oleh admin-layout.js -->
+
+    <main class="admin-content">
+        <!-- ========== TOPBAR ========== -->
+        <header class="admin-topbar">
+            <div>
+                <h1 class="admin-page-title">User Management</h1>
+                <p class="admin-page-subtitle">Kelola akun pengguna sistem BeanSense</p>
+            </div>
+            <div class="admin-topbar-right">
+                <!-- Tombol Tambah User hanya tampil untuk ADMIN (dikontrol JS) -->
+                <button type="button" class="filter-btn filter-btn-export" id="btnAddUser" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    Tambah User
+                </button>
+            </div>
+        </header>
+
+        <div class="admin-body">
+            <!-- Alert messages (diisi JS) -->
+            <div id="alertBox" style="display:none; margin-bottom:16px;"></div>
+
+            <!-- Info banner operator (diisi JS) -->
+            <div id="operatorBanner"
+                style="display:none; background:#fff3cd; border:1px solid #ffc107; border-radius:10px; padding:10px 16px; margin-bottom:16px; color:#856404; font-size:0.875rem;">
+                Anda login sebagai <strong>Operator</strong>. Hanya Admin yang dapat menambah, mengubah, atau menghapus
+                pengguna.
+            </div>
+
+            <!-- ========== TABEL USER ========== -->
+            <div class="history-card">
+                <div class="history-card-header">
+                    <h3>Daftar Pengguna</h3>
+                    <span class="history-count"><span id="userCount">0</span> user</span>
+                </div>
+                <div class="history-table-wrap">
+                    <table class="history-table" id="userTable">
+                        <thead>
+                            <tr>
+                                <th>Nama</th>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Email</th>
+                                <th id="aksiHeader" class="text-end" style="display:none;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <tr>
+                                <td colspan="5" class="history-empty">Memuat data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========== MODAL TAMBAH / EDIT USER ========== -->
+    <div class="modal-overlay" id="userModalOverlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="userModalTitle">Tambah User</h3>
+                <button type="button" class="modal-close" id="userModalClose" aria-label="Tutup">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+
+            <div id="modalAlertBox" style="display:none; margin-bottom:12px;"></div>
+
+            <div id="userForm" class="modal-form">
+                <input type="hidden" id="userId" />
+
+                <div class="form-group">
+                    <label for="userNama">Nama Lengkap</label>
+                    <input type="text" id="userNama" class="form-input" placeholder="Contoh: Budi Santoso" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="userUsername">Username</label>
+                    <input type="text" id="userUsername" class="form-input" placeholder="Contoh: budi.santoso"
+                        required />
+                </div>
+
+                <div class="form-group">
+                    <label for="userPassword">Password</label>
+                    <input type="password" id="userPassword" class="form-input"
+                        placeholder="Kosongkan jika tidak diubah" />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userRole">Role</label>
+                        <select id="userRole" class="form-input">
+                            <option value="ADMIN">Admin</option>
+                            <option value="OPERATOR">Operator</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">Email</label>
+                        <input type="email" id="userEmail" class="form-input" placeholder="user@email.com" />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="userModalCancel">Batal</button>
+                    <button type="button" class="btn-primary" id="userModalSave">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        Auth.requireLogin();
+    </script>
+    <script src="/js/admin-layout.js"></script>
+    <script>
+        // =============================================
+        // USER PAGE — Pure HTML + Fetch ke API Gateway
+        // =============================================
+        (function () {
+            const user = Auth.getUser();
+            const isAdmin = user.role === 'ADMIN';
+
+            // Tampilkan elemen sesuai role
+            if (isAdmin) {
+                document.getElementById('btnAddUser').style.display = '';
+                document.getElementById('aksiHeader').style.display = '';
+            } else {
+                document.getElementById('operatorBanner').style.display = '';
+            }
+
+            // ---- Helpers ----
+            function showAlert(msg, type = 'success') {
+                const box = document.getElementById('alertBox');
+                box.className = type === 'success' ? 'alert-success' : 'alert-error';
+                box.textContent = msg;
+                box.style.display = '';
+                setTimeout(() => { box.style.display = 'none'; }, 4000);
+            }
+
+            function showModalAlert(msg) {
+                const box = document.getElementById('modalAlertBox');
+                box.className = 'alert-error';
+                box.textContent = msg;
+                box.style.display = '';
+            }
+
+            function hideModalAlert() {
+                document.getElementById('modalAlertBox').style.display = 'none';
+            }
+
+            // ---- Load daftar user ----
+            async function loadUsers() {
+                const tbody = document.getElementById('userTableBody');
+                try {
+                    const res = await Auth.apiFetch('/api/users');
+                    if (!res || !res.ok) throw new Error('Gagal mengambil data');
+                    const users = await res.json();
+
+                    document.getElementById('userCount').textContent = users.length;
+
+                    if (!users.length) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="history-empty">Belum ada data pengguna.</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = '';
+                    users.forEach(u => {
+                        const badgeClass = u.role === 'ADMIN' ? 'history-badge-matang' : 'history-badge-mentah';
+                        const aksiCol = isAdmin ? `
+              <td class="text-end">
+                <div class="action-btns">
+                  <button type="button" class="action-btn action-btn-edit" aria-label="Edit user"
+                    data-id="${u.id}" data-name="${u.nama || ''}" data-username="${u.username || ''}"
+                    data-role="${u.role || ''}" data-email="${u.email || ''}">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <button type="button" class="action-btn action-btn-delete" aria-label="Hapus user"
+                    data-id="${u.id}" data-name="${u.nama || ''}">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>` : '';
+
+                        tbody.insertAdjacentHTML('beforeend', `
+              <tr>
+                <td class="user-name-cell">
+                  <div class="user-avatar-sm">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+                      <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                  </div>
+                  <span>${u.nama || '-'}</span>
+                </td>
+                <td>${u.username || '-'}</td>
+                <td><span class="history-badge ${badgeClass}">${u.role || '-'}</span></td>
+                <td>${u.email || '-'}</td>
+                ${aksiCol}
+              </tr>`);
+                    });
+
+                    // Pasang event listener tombol edit & hapus
+                    if (isAdmin) {
+                        document.querySelectorAll('.action-btn-edit').forEach(btn => {
+                            btn.addEventListener('click', () => openEditModal(btn.dataset));
+                        });
+                        document.querySelectorAll('.action-btn-delete').forEach(btn => {
+                            btn.addEventListener('click', () => deleteUser(btn.dataset.id, btn.dataset.name));
+                        });
+                    }
+
+                } catch (e) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="history-empty">Gagal memuat data pengguna.</td></tr>';
+                }
+            }
+
+            // ---- Modal helpers ----
+            const overlay = document.getElementById('userModalOverlay');
+            const modalTitle = document.getElementById('userModalTitle');
+
+            function openModal() { overlay.classList.add('active'); hideModalAlert(); }
+            function closeModal() {
+                overlay.classList.remove('active');
+                document.getElementById('userId').value = '';
+                document.getElementById('userNama').value = '';
+                document.getElementById('userUsername').value = '';
+                document.getElementById('userPassword').value = '';
+                document.getElementById('userRole').value = 'ADMIN';
+                document.getElementById('userEmail').value = '';
+                document.getElementById('userPassword').placeholder = 'Kosongkan jika tidak diubah';
+                document.getElementById('userPassword').required = false;
+                hideModalAlert();
+            }
+
+            function openAddModal() {
+                modalTitle.textContent = 'Tambah User';
+                document.getElementById('userPassword').placeholder = 'Masukkan password';
+                document.getElementById('userPassword').required = true;
+                openModal();
+            }
+
+            function openEditModal(data) {
+                modalTitle.textContent = 'Edit User';
+                document.getElementById('userId').value = data.id || '';
+                document.getElementById('userNama').value = data.name || '';
+                document.getElementById('userUsername').value = data.username || '';
+                document.getElementById('userRole').value = data.role || 'OPERATOR';
+                document.getElementById('userEmail').value = data.email || '';
+                document.getElementById('userPassword').placeholder = 'Kosongkan jika tidak diubah';
+                document.getElementById('userPassword').required = false;
+                openModal();
+            }
+
+            // ---- Simpan user (tambah / edit) ----
+            async function saveUser() {
+                const id = document.getElementById('userId').value;
+                const nama = document.getElementById('userNama').value.trim();
+                const username = document.getElementById('userUsername').value.trim();
+                const password = document.getElementById('userPassword').value;
+                const role = document.getElementById('userRole').value;
+                const email = document.getElementById('userEmail').value.trim();
+
+                if (!nama || !username) { showModalAlert('Nama dan username wajib diisi.'); return; }
+                if (!id && !password) { showModalAlert('Password wajib diisi untuk user baru.'); return; }
+
+                const body = { nama, username, password, role, email };
+
+                try {
+                    let res;
+                    if (id) {
+                        res = await Auth.apiFetch(`/api/users/${id}`, {
+                            method: 'PUT',
+                            body: JSON.stringify(body)
+                        });
+                    } else {
+                        res = await Auth.apiFetch('/api/users', {
+                            method: 'POST',
+                            body: JSON.stringify(body)
+                        });
+                    }
+
+                    if (!res || !res.ok) {
+                        const errText = await res?.text();
+                        showModalAlert(errText || 'Gagal menyimpan user. Coba lagi.');
+                        return;
+                    }
+
+                    closeModal();
+                    showAlert(id ? 'User berhasil diperbarui.' : 'User baru berhasil ditambahkan.');
+                    loadUsers();
+
+                } catch (e) {
+                    showModalAlert('Gagal menyimpan user. Coba lagi.');
+                }
+            }
+
+            // ---- Hapus user ----
+            async function deleteUser(id, nama) {
+                if (!confirm(`Hapus pengguna "${nama}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+
+                try {
+                    const res = await Auth.apiFetch(`/api/users/${id}`, { method: 'DELETE' });
+                    if (!res || !res.ok) throw new Error();
+                    showAlert('User berhasil dihapus.');
+                    loadUsers();
+                } catch (e) {
+                    showAlert('Gagal menghapus user.', 'error');
+                }
+            }
+
+            // ---- Event listeners ----
+            if (isAdmin) {
+                document.getElementById('btnAddUser').addEventListener('click', openAddModal);
+                document.getElementById('userModalSave').addEventListener('click', saveUser);
+                document.getElementById('userModalClose').addEventListener('click', closeModal);
+                document.getElementById('userModalCancel').addEventListener('click', closeModal);
+                overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'Escape' && overlay.classList.contains('active')) closeModal();
+                });
+            }
+
+            loadUsers();
+        })();
+    </script>
+</body>
+
+</html>

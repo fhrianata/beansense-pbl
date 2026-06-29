@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — BeanSense Admin</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+  <link rel="icon" href="/img/logo.png" type="image/png" />
+</head>
+
+<body class="admin-layout">
+  <!-- Sidebar di-inject oleh admin-layout.js -->
+
+  <main class="admin-content">
+    <!-- Topbar -->
+    <header class="admin-topbar">
+      <div>
+        <h1 class="admin-page-title">IoT Control Center</h1>
+        <p class="admin-page-subtitle">Pemantauan Sistem Penyortiran Kopi Real-Time</p>
+      </div>
+      <div class="admin-topbar-right">
+        <div class="status-badge" id="connectionBadge">
+          <span class="status-dot"></span>
+          <span id="connectionText">Status Connected</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-body">
+      <!-- Stat Cards -->
+      <div class="stat-cards">
+        <div class="stat-card stat-card-default">
+          <div class="stat-card-text">
+            <p class="stat-label">Total Pembacaan</p>
+            <h2 class="stat-value" id="statTotal">0</h2>
+          </div>
+          <div class="stat-icon stat-icon-default">
+            <svg viewBox="0 0 24 24" fill="none">
+              <ellipse cx="12" cy="5" rx="8" ry="3" stroke="currentColor" stroke-width="1.8" />
+              <path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5" stroke="currentColor" stroke-width="1.8" />
+              <path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" stroke="currentColor" stroke-width="1.8" />
+            </svg>
+          </div>
+        </div>
+        <div class="stat-card stat-card-matang">
+          <div class="stat-card-text">
+            <p class="stat-label">Total Matang</p>
+            <h2 class="stat-value" id="statMatang">0</h2>
+          </div>
+          <div class="stat-icon stat-icon-matang">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </div>
+        </div>
+        <div class="stat-card stat-card-mentah">
+          <div class="stat-card-text">
+            <p class="stat-label">Total Mentah</p>
+            <h2 class="stat-value" id="statMentah">0</h2>
+          </div>
+          <div class="stat-icon stat-icon-mentah">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+              <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </div>
+        </div>
+        <div class="stat-card stat-card-reject">
+          <div class="stat-card-text">
+            <p class="stat-label">Total Reject</p>
+            <h2 class="stat-value" id="statReject">0</h2>
+          </div>
+          <div class="stat-icon stat-icon-reject">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 9v4M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <path
+                d="M10.29 3.86 1.82 18a1.5 1.5 0 0 0 1.29 2.25h17.78A1.5 1.5 0 0 0 22.18 18L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"
+                stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart + Log -->
+      <div class="dashboard-row">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div class="chart-card-title">
+              <svg class="chart-title-icon" viewBox="0 0 24 24" fill="none">
+                <path d="M4 19V10M10 19V5M16 19v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+              <h3>Distribusi Data Hari Ini</h3>
+            </div>
+            <button class="chart-refresh-btn" id="refreshBtn" aria-label="Refresh">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5" stroke="currentColor" stroke-width="1.8"
+                  stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
+          <div class="bar-chart">
+            <div class="bar-chart-grid">
+              <span id="gridMax">0</span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span>0</span>
+            </div>
+            <div class="bar-chart-bars">
+              <div class="bar-group">
+                <div class="bar bar-matang" id="barMatang" style="height:0%"></div>
+                <p class="bar-label">MATANG</p>
+              </div>
+              <div class="bar-group">
+                <div class="bar bar-mentah" id="barMentah" style="height:0%"></div>
+                <p class="bar-label">MENTAH</p>
+              </div>
+              <div class="bar-group">
+                <div class="bar bar-reject" id="barReject" style="height:0%"></div>
+                <p class="bar-label">REJECT</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensor Event Log -->
+        <div class="log-card">
+          <div class="log-card-header">
+            <svg class="log-title-icon" viewBox="0 0 24 24" fill="none">
+              <path d="m4 17 6-5-6-5M12 19h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            <h3>Sensor Event Log</h3>
+          </div>
+          <div class="log-list" id="logList">
+            <p class="log-item">Memuat data...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabel History Terbaru -->
+      <div class="history-card">
+        <div class="history-card-header">
+          <h3>Tabel Data Histori Terbaru</h3>
+          <a href="history.html" class="history-link">
+            Lihat Semua Data
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </a>
+        </div>
+        <div class="history-table-wrap">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Tanggal / Waktu</th>
+                <th>Warna</th>
+                <th>Berat</th>
+                <th>Klasifikasi</th>
+              </tr>
+            </thead>
+            <tbody id="recentTableBody">
+              <tr>
+                <td colspan="4" class="history-empty">Memuat data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    Auth.requireLogin();
+  </script>
+  <script src="/js/admin-layout.js"></script>
+  <script>
+    // ---- Load data dashboard ----
+    async function loadDashboard() {
+      try {
+        const res = await Auth.apiFetch('/api/sensor-warna/stats');
+        if (!res || !res.ok) return;
+        const stats = await res.json();
+
+        const total = stats.total || 0;
+        const matang = stats.matang || 0;
+        const mentah = stats.mentah || 0;
+        const reject = stats.reject || 0;
+
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statMatang').textContent = matang;
+        document.getElementById('statMentah').textContent = mentah;
+        document.getElementById('statReject').textContent = reject;
+
+        // Update bar chart heights
+        const max = Math.max(matang, mentah, reject, 1);
+        document.getElementById('gridMax').textContent = max;
+        document.getElementById('barMatang').style.height = (matang / max * 100) + '%';
+        document.getElementById('barMentah').style.height = (mentah / max * 100) + '%';
+        document.getElementById('barReject').style.height = (reject / max * 100) + '%';
+
+        // Status badge
+        document.getElementById('connectionText').textContent = 'Status Connected';
+
+      } catch (e) {
+        document.getElementById('connectionText').textContent = 'Terputus';
+      }
+    }
+
+    async function loadRecentLog() {
+      try {
+        const res = await Auth.apiFetch('/api/sensor-warna/recent');
+        if (!res || !res.ok) return;
+        const data = await res.json();
+
+        // Event log
+        const logEl = document.getElementById('logList');
+        logEl.innerHTML = '';
+        if (!data.length) {
+          logEl.innerHTML = '<p class="log-item">Belum ada data.</p>';
+        } else {
+          data.slice(0, 10).forEach(item => {
+            const ts = (item.timestamp || '').substring(11, 19);
+            const warn = item.sensorWarna || '-';
+            const klas = item.hasilKlasifikasi || '-';
+            const p = document.createElement('p');
+            p.className = 'log-item';
+            p.textContent = `[${ts}] ${warn} — → ${klas}`;
+            logEl.appendChild(p);
+          });
+        }
+
+        // Tabel history terbaru
+        const tbody = document.getElementById('recentTableBody');
+        tbody.innerHTML = '';
+        if (!data.length) {
+          tbody.innerHTML = '<tr><td colspan="4" class="history-empty">Belum ada data.</td></tr>';
+        } else {
+          data.forEach(item => {
+            const ts = item.timestamp ? item.timestamp.replace('T', ' ').substring(0, 19) : '-';
+            const warn = item.sensorWarna || '-';
+            const klas = item.hasilKlasifikasi || '-';
+            const dotClass = warn === 'MERAH' ? 'history-dot-merah' : 'history-dot-hijau';
+            const badgeClass = klas === 'MATANG' ? 'history-badge-matang' : 'history-badge-mentah';
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr>
+                  <td class="history-time">${ts}</td>
+                  <td><div class="history-color-cell"><span class="history-dot ${dotClass}"></span><span>${warn}</span></div></td>
+                  <td class="history-weight">-</td>
+                  <td><span class="history-badge ${badgeClass}">${klas}</span></td>
+                </tr>`);
+          });
+        }
+      } catch (e) {
+        console.warn('Gagal load log:', e);
+      }
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      loadDashboard();
+      loadRecentLog();
+    });
+
+    // Auto refresh setiap 5 detik
+    loadDashboard();
+    loadRecentLog();
+    setInterval(() => { loadDashboard(); loadRecentLog(); }, 5000);
+  </script>
+</body>
+
+</html>

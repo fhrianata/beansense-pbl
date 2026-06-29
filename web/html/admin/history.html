@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>History — BeanSense Admin</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+  <link rel="icon" href="/img/logo.png" type="image/png" />
+</head>
+
+<body class="admin-layout">
+  <main class="admin-content">
+    <header class="admin-topbar">
+      <div>
+        <h1 class="admin-page-title">History</h1>
+        <p class="admin-page-subtitle">Riwayat lengkap hasil penyortiran buah kopi</p>
+      </div>
+      <div class="admin-topbar-right">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span>Status Connected</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-body">
+      <!-- Filter Bar -->
+      <div class="filter-card">
+        <div class="filter-search">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8" />
+            <path d="m20 20-3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <input type="text" id="searchInput" class="filter-input" placeholder="Cari klasifikasi, warna..." />
+        </div>
+        <div class="filter-date-group">
+          <input type="date" id="filterStartDate" class="filter-date" />
+          <span class="filter-date-sep">—</span>
+          <input type="date" id="filterEndDate" class="filter-date" />
+        </div>
+        <button type="button" class="filter-btn filter-btn-reset" id="resetFilterBtn">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" />
+          </svg>
+          Reset
+        </button>
+        <button type="button" class="filter-btn filter-btn-export" id="exportExcelBtn">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor"
+              stroke-width="1.8" stroke-linejoin="round" />
+            <path d="M14 2v6h6M9 13l3 4 3-4M12 17V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          Export Excel
+        </button>
+      </div>
+
+      <!-- Tabel -->
+      <div class="history-card">
+        <div class="history-card-header">
+          <h3>Riwayat Hasil Penyortiran</h3>
+          <span class="history-count"><span id="historyCount">0</span> data</span>
+        </div>
+        <div class="history-table-wrap">
+          <table class="history-table" id="historyTable">
+            <thead>
+              <tr>
+                <th>Tanggal / Waktu</th>
+                <th>Warna</th>
+                <th>Berat</th>
+                <th>Klasifikasi</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr>
+                <td colspan="4" class="history-empty">Memuat data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="history-pagination">
+          <p class="pagination-info">Menampilkan <strong id="visibleCount">0</strong> data</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script>Auth.requireLogin();</script>
+  <script src="/js/admin-layout.js"></script>
+  <script>
+    let allRows = [];
+
+    async function loadHistory() {
+      try {
+        const res = await Auth.apiFetch('/api/sensor-warna');
+        if (!res || !res.ok) return;
+        const data = await res.json();
+
+        const tbody = document.getElementById('historyBody');
+        tbody.innerHTML = '';
+        allRows = [];
+
+        if (!data.length) {
+          tbody.innerHTML = '<tr><td colspan="4" class="history-empty">Belum ada data.</td></tr>';
+          return;
+        }
+
+        data.forEach(item => {
+          const ts = item.timestamp ? item.timestamp.replace('T', ' ').substring(0, 19) : '-';
+          const warn = item.sensorWarna || '-';
+          const klas = item.hasilKlasifikasi || '-';
+          const dotClass = warn === 'MERAH' ? 'history-dot-merah' : 'history-dot-hijau';
+          const badgeClass = klas === 'MATANG' ? 'history-badge-matang' : 'history-badge-mentah';
+
+          const tr = document.createElement('tr');
+          tr.dataset.ts = ts;
+          tr.dataset.text = (ts + warn + klas).toLowerCase();
+          tr.innerHTML = `
+              <td class="history-time">${ts}</td>
+              <td><div class="history-color-cell"><span class="history-dot ${dotClass}"></span><span>${warn}</span></div></td>
+              <td class="history-weight">-</td>
+              <td><span class="history-badge ${badgeClass}">${klas}</span></td>`;
+          tbody.appendChild(tr);
+          allRows.push(tr);
+        });
+
+        document.getElementById('historyCount').textContent = data.length;
+        updateVisibleCount();
+      } catch (e) {
+        console.error('Gagal load history:', e);
+      }
+    }
+
+    function applyFilters() {
+      const kw = document.getElementById('searchInput').value.toLowerCase();
+      const start = document.getElementById('filterStartDate').value;
+      const end = document.getElementById('filterEndDate').value;
+      let visible = 0;
+      allRows.forEach(tr => {
+        const text = tr.dataset.text;
+        const ts = tr.dataset.ts;
+        const matchKw = !kw || text.includes(kw);
+        const matchDate = (!start || ts >= start) && (!end || ts <= end + ' 23:59:59');
+        tr.style.display = matchKw && matchDate ? '' : 'none';
+        if (matchKw && matchDate) visible++;
+      });
+      document.getElementById('visibleCount').textContent = visible;
+    }
+
+    function updateVisibleCount() {
+      document.getElementById('visibleCount').textContent = allRows.length;
+    }
+
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('filterStartDate').addEventListener('change', applyFilters);
+    document.getElementById('filterEndDate').addEventListener('change', applyFilters);
+    document.getElementById('resetFilterBtn').addEventListener('click', () => {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('filterStartDate').value = '';
+      document.getElementById('filterEndDate').value = '';
+      applyFilters();
+    });
+
+    document.getElementById('exportExcelBtn').addEventListener('click', () => {
+      const headers = ['Tanggal/Waktu', 'Warna', 'Berat', 'Klasifikasi'];
+      const rows = [headers];
+      allRows.forEach(tr => {
+        if (tr.style.display === 'none') return;
+        const cells = tr.querySelectorAll('td');
+        rows.push([
+          cells[0].textContent.trim(),
+          cells[1].querySelector('span:last-child')?.textContent.trim() || '',
+          cells[2].textContent.trim(),
+          cells[3].textContent.trim()
+        ]);
+      });
+      const csv = rows.map(r => r.map(f => `"${String(f).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `history-beansense-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    });
+
+    loadHistory();
+  </script>
+</body>
+
+</html>

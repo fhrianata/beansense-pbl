@@ -1,0 +1,369 @@
+# ================================================================
+# BeanSense — docker-compose.yml  (FIXED v3)
+#
+# FIX v3:
+# - Eureka healthcheck: ganti wget → curl (wget tidak ada di temurin-alpine)
+# - Semua Dockerfile service: ENTRYPOINT pakai sh -c agar JAVA_OPTS dibaca
+# - LOGSTASH_HOST di-set "localhost" agar LogstashAppender tidak coba
+#   connect ke container logstash yang tidak running (ELK off by default)
+# - eureka start_period diperpanjang ke 90s (Spring Cloud Eureka Server
+#   butuh ~60-80 detik untuk fully UP di RAM terbatas)
+# - depends_on api-gateway dan semua service → service_healthy (bukan started)
+# - es-data volume dihapus dari default (hanya dipakai profile elk)
+#
+# Struktur folder (BARU):
+#   beansense-backend-fixed/
+#     nginx/Dockerfile  nginx/nginx.conf
+#     web/css/  web/html/  web/js/  web/img/  web/fonts/
+#     mysql/beansense.sql
+#     monitoring/...
+#     eureka/  api-gateway/  auth-service/  dst.
+#
+# CARA PAKAI — WAJIB reset volume saat pertama kali:
+#   docker compose down -v
+#   docker compose up -d --build
+#
+# Login  : admin / admin123
+# Grafana: http://localhost:3000  (admin / admin)
+# Eureka : http://localhost:8761
+# ================================================================
+
+networks:
+  beansense-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  prometheus-data:
+  grafana-data:
+
+services:
+
+  # ============================================================
+  # DATABASE
+  # ============================================================
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: bean123
+      MYSQL_DATABASE: beansense
+      TZ: Asia/Jakarta
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/beansense.sql:/docker-entrypoint-initdb.d/beansense.sql:ro
+    networks:
+      - beansense-net
+    mem_limit: 1g
+    memswap_limit: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -pbean123 --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # ============================================================
+  # EUREKA — Service Discovery
+  # FIX: healthcheck pakai curl (wget tidak ada di temurin-alpine)
+  # FIX: start_period 90s (Spring Cloud Eureka butuh ~60-80s startup)
+  # FIX: LOGSTASH_HOST=localhost agar LogstashAppender tidak crash
+  #      saat connect ke logstash yang tidak running
+  # ============================================================
+  eureka:
+    build: ./eureka
+    container_name: eureka
+    restart: unless-stopped
+    environment:
+      LOGSTASH_HOST: localhost
+      TZ: Asia/Jakarta
+      JAVA_OPTS: "-Xms64m -Xmx160m"
+    ports:
+      - "8761:8761"
+    networks:
+      - beansense-net
+    mem_limit: 256m
+    memswap_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8761/actuator/health | grep -q UP || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 90s
+
+  # ============================================================
+  # API GATEWAY
+  # FIX: depends_on eureka service_healthy
+  # FIX: LOGSTASH_HOST=localhost
+  # ============================================================
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    restart: unless-stopped
+    depends_on:
+      eureka:
+        condition: service_healthy
+    environment:
+      EUREKA_HOST: eureka
+      LOGSTASH_HOST: localhost
+      TZ: Asia/Jakarta
+      JAVA_OPTS: "-Xms64m -Xmx192m"
+    ports:
+      - "9000:9000"
+    networks:
+      - beansense-net
+    mem_limit: 256m
+    memswap_limit: 256m
+
+  # ============================================================
+  # AUTH SERVICE
+  # FIX: depends_on eureka service_healthy
+  # FIX: LOGSTASH_HOST=localhost
+  # ============================================================
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    restart: unless-stopped
+    depends_on:
+      eureka:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      EUREKA_HOST: eureka
+      DB_HOST: mysql
+      DB_USERNAME: root
+      DB_PASSWORD: bean123
+      LOGSTASH_HOST: localhost
+      JWT_SECRET: beansense-rahasia-jwt-kopi-sensor-iot-2026-jangan-disebar
+      TZ: Asia/Jakarta
+      JAVA_OPTS: "-Xms64m -Xmx192m"
+    ports:
+      - "8082:8082"
+    networks:
+      - beansense-net
+    mem_limit: 512m
+    memswap_limit: 512m
+
+  # ============================================================
+  # SENSOR WARNA SERVICE
+  # ============================================================
+  sensor-warna-service:
+    build: ./sensor-warna-service
+    container_name: sensor-warna-service
+    restart: unless-stopped
+    depends_on:
+      eureka:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      EUREKA_HOST: eureka
+      DB_HOST: mysql
+      DB_USERNAME: root
+      DB_PASSWORD: bean123
+      LOGSTASH_HOST: localhost
+      SENSOR_API_KEY: BEANSENSE123
+      TZ: Asia/Jakarta
+      JAVA_OPTS: "-Xms48m -Xmx128m"
+    ports:
+      - "8083:8083"
+    networks:
+      - beansense-net
+    mem_limit: 384m
+    memswap_limit: 384m
+
+  # ============================================================
+  # SENSOR BERAT SERVICE
+  # ============================================================
+  sensor-berat-service:
+    build: ./sensor-berat-service
+    container_name: sensor-berat-service
+    restart: unless-stopped
+    depends_on:
+      eureka:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      EUREKA_HOST: eureka
+      DB_HOST: mysql
+      DB_USERNAME: root
+      DB_PASSWORD: bean123
+      LOGSTASH_HOST: localhost
+      SENSOR_API_KEY: BEANSENSE123
+      TZ: Asia/Jakarta
+      JAVA_OPTS: "-Xms48m -Xmx128m"
+    ports:
+      - "8085:8085"
+    networks:
+      - beansense-net
+    mem_limit: 384m
+    memswap_limit: 384m
+
+  # ============================================================
+  # NOTIFICATION SERVICE
+  # ============================================================
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    restart: unless-stopped
+    depends_on:
+      eureka:
+        condition: service_healthy
+    environment:
+      EUREKA_HOST: eureka
+      LOGSTASH_HOST: localhost
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: 587
+      MAIL_USERNAME: fachrianata1999@gmail.com
+      MAIL_PASSWORD: etiymllapvprseyh
+      ADMIN_EMAIL: xenoblade1121@gmail.com
+      TZ: Asia/Jakarta
+      JAVA_OPTS: "-Xms48m -Xmx128m"
+    ports:
+      - "8086:8086"
+    networks:
+      - beansense-net
+    mem_limit: 192m
+    memswap_limit: 192m
+
+  # ============================================================
+  # NGINX — Static frontend
+  # FIX: context "." (root) karena nginx/ dan web/ ada di root project
+  # ============================================================
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: nginx
+    restart: unless-stopped
+    depends_on:
+      - api-gateway
+    environment:
+      TZ: Asia/Jakarta
+    ports:
+      - "80:80"
+    networks:
+      - beansense-net
+    mem_limit: 64m
+    memswap_limit: 64m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ============================================================
+  # PROMETHEUS
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=7d'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    networks:
+      - beansense-net
+    mem_limit: 192m
+    memswap_limit: 192m
+
+  # ============================================================
+  # GRAFANA
+  # ============================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - beansense-net
+    mem_limit: 192m
+    memswap_limit: 192m
+
+  # ============================================================
+  # ELK Stack — OFF by default (profiles: elk)
+  # Jalankan hanya jika perlu: docker compose --profile elk up -d
+  # ============================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    profiles: ["elk"]
+    container_name: elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    volumes:
+      - /tmp/es-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - beansense-net
+    mem_limit: 600m
+    memswap_limit: 600m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -q '\"status\"' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.15.3
+    profiles: ["elk"]
+    container_name: logstash
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/elk/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./monitoring/elk/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+    environment:
+      - "LS_JAVA_OPTS=-Xms128m -Xmx192m"
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - beansense-net
+    mem_limit: 256m
+    memswap_limit: 256m
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.3
+    profiles: ["elk"]
+    container_name: kibana
+    restart: unless-stopped
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - beansense-net
+    mem_limit: 256m
+    memswap_limit: 256m

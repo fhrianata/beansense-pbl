@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analytics — BeanSense Admin</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+  <link rel="icon" href="/img/logo.png" type="image/png" />
+</head>
+
+<body class="admin-layout">
+  <!-- Sidebar di-inject oleh admin-layout.js -->
+
+  <main class="admin-content">
+    <!-- ========== TOPBAR ========== -->
+    <header class="admin-topbar">
+      <div>
+        <h1 class="admin-page-title">Analytics</h1>
+        <p class="admin-page-subtitle">
+          Statistik dan tren hasil penyortiran kopi
+        </p>
+      </div>
+      <div class="admin-topbar-right">
+        <div class="status-badge" id="connectionBadge">
+          <span class="status-dot"></span>
+          <span id="connectionText">Status Connected</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-body">
+      <!-- ========== PERSENTASE STATS ========== -->
+      <div class="percent-cards">
+        <div class="percent-card">
+          <div class="donut" id="donutMatang" style="--value: 0; --donut-color: var(--brown-mid);">
+            <span class="donut-value" id="pctMatang">0%</span>
+          </div>
+          <div class="percent-text">
+            <p class="percent-label">Persentase Matang</p>
+            <p class="percent-sub">Biji kopi siap proses</p>
+          </div>
+        </div>
+
+        <div class="percent-card">
+          <div class="donut" id="donutMentah" style="--value: 0; --donut-color: #9aa6b2;">
+            <span class="donut-value" id="pctMentah">0%</span>
+          </div>
+          <div class="percent-text">
+            <p class="percent-label">Persentase Mentah</p>
+            <p class="percent-sub">Perlu waktu pematangan</p>
+          </div>
+        </div>
+
+        <div class="percent-card">
+          <div class="donut" id="donutReject" style="--value: 0; --donut-color: #d9534f;">
+            <span class="donut-value" id="pctReject">0%</span>
+          </div>
+          <div class="percent-text">
+            <p class="percent-label">Persentase Reject</p>
+            <p class="percent-sub">Tidak memenuhi standar</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== GRAFIK PERIODE ========== -->
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div class="chart-card-title">
+            <svg class="chart-title-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 19V10M10 19V5M16 19v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <h3>Tren Hasil Penyortiran</h3>
+          </div>
+
+          <!-- Tab pilihan periode -->
+          <div class="period-tabs" id="periodTabs">
+            <button type="button" class="period-tab active" data-period="harian">Harian</button>
+            <button type="button" class="period-tab" data-period="mingguan">Mingguan</button>
+            <button type="button" class="period-tab" data-period="bulanan">Bulanan</button>
+          </div>
+        </div>
+
+        <!-- ---- Grafik Harian ---- -->
+        <div class="period-chart" data-period-chart="harian">
+          <div class="multi-bar-chart" id="chartHarian">
+            <!-- Bar groups di-generate oleh JS -->
+          </div>
+        </div>
+
+        <!-- ---- Grafik Mingguan ---- -->
+        <div class="period-chart" data-period-chart="mingguan" hidden>
+          <div class="multi-bar-chart" id="chartMingguan">
+          </div>
+        </div>
+
+        <!-- ---- Grafik Bulanan ---- -->
+        <div class="period-chart" data-period-chart="bulanan" hidden>
+          <div class="multi-bar-chart" id="chartBulanan">
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="chart-legend">
+          <div class="legend-item">
+            <span class="legend-dot legend-dot-matang"></span> Matang
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot legend-dot-mentah"></span> Mentah
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot legend-dot-reject"></span> Reject
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script>Auth.requireLogin();</script>
+  <script src="/js/admin-layout.js"></script>
+  <script>
+    // ---- Load analytics data ----
+    async function loadAnalytics() {
+      try {
+        const res = await Auth.apiFetch('/api/sensor-warna/stats');
+        if (!res || !res.ok) return;
+        const stats = await res.json();
+
+        const total = stats.total || 0;
+        const matang = stats.matang || 0;
+        const mentah = stats.mentah || 0;
+        const reject = stats.reject || 0;
+
+        const pMatang = total > 0 ? Math.round(matang / total * 100) : 0;
+        const pMentah = total > 0 ? Math.round(mentah / total * 100) : 0;
+        const pReject = total > 0 ? Math.round(reject / total * 100) : 0;
+
+        // Update donut charts
+        document.getElementById('donutMatang').style.setProperty('--value', pMatang);
+        document.getElementById('pctMatang').textContent = pMatang + '%';
+
+        document.getElementById('donutMentah').style.setProperty('--value', pMentah);
+        document.getElementById('pctMentah').textContent = pMentah + '%';
+
+        document.getElementById('donutReject').style.setProperty('--value', pReject);
+        document.getElementById('pctReject').textContent = pReject + '%';
+
+        // Update connection status
+        document.getElementById('connectionText').textContent = 'Status Connected';
+      } catch (e) {
+        document.getElementById('connectionText').textContent = 'Terputus';
+      }
+    }
+
+    // ---- Generate bar chart groups ----
+    function generateBars(containerId, labels) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      labels.forEach(label => {
+        const group = document.createElement('div');
+        group.className = 'multi-bar-group';
+        group.innerHTML = `
+            <div class="multi-bar-stack">
+              <div class="multi-bar multi-bar-matang" style="height: ${30 + Math.random() * 40}%"></div>
+              <div class="multi-bar multi-bar-mentah" style="height: ${15 + Math.random() * 25}%"></div>
+              <div class="multi-bar multi-bar-reject" style="height: ${3 + Math.random() * 10}%"></div>
+            </div>
+            <p class="multi-bar-label">${label}</p>`;
+        container.appendChild(group);
+      });
+    }
+
+    generateBars('chartHarian', ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']);
+    generateBars('chartMingguan', ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4']);
+    generateBars('chartBulanan', ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun']);
+
+    // ---- Tab period switching ----
+    const tabs = document.querySelectorAll('.period-tab');
+    const charts = document.querySelectorAll('.period-chart');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const period = tab.dataset.period;
+        tabs.forEach(t => t.classList.toggle('active', t === tab));
+        charts.forEach(chart => {
+          chart.hidden = chart.dataset.periodChart !== period;
+        });
+      });
+    });
+
+    loadAnalytics();
+    setInterval(loadAnalytics, 10000);
+  </script>
+</body>
+
+</html>

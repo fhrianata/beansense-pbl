@@ -1,0 +1,117 @@
+{
+  "title": "BeanSense - Microservices Overview",
+  "uid": "beansense-overview",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Service Up/Down",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "up{job=~\"eureka|api-gateway|auth-service|sensor-warna-service|sensor-berat-service|web-service\"}",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "JVM Heap Used (per service)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{area=\"heap\"}",
+          "legendFormat": "{{job}} - {{id}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "HTTP Request Rate (per service)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        {
+          "expr": "sum by (job) (rate(http_server_requests_seconds_count[1m]))",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "HTTP 5xx Error Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "targets": [
+        {
+          "expr": "sum by (job) (rate(http_server_requests_seconds_count{status=~\"5..\"}[1m]))",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "CPU Usage (per service)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "targets": [
+        {
+          "expr": "process_cpu_usage",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Klasifikasi Warna Biji Kopi (per menit)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 },
+      "targets": [
+        {
+          "expr": "sum by (klasifikasi) (rate(beansense_sensor_warna_klasifikasi_total[1m]))",
+          "legendFormat": "{{klasifikasi}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Data Berat Masuk per Wadah (per menit)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 22 },
+      "targets": [
+        {
+          "expr": "sum by (wadah) (rate(beansense_sensor_berat_masuk_total[1m]))",
+          "legendFormat": "{{wadah}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Berat Terakhir Diterima (gram)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 30 },
+      "targets": [
+        {
+          "expr": "beansense_sensor_berat_terakhir_gram"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Total Biji Kopi Tersortir (MATANG vs MENTAH)",
+      "type": "piechart",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 30 },
+      "targets": [
+        {
+          "expr": "sum by (klasifikasi) (beansense_sensor_warna_klasifikasi_total)",
+          "legendFormat": "{{klasifikasi}}"
+        }
+      ]
+    }
+  ]
+}

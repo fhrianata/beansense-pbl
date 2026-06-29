@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitoring — BeanSense Admin</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+  <link rel="icon" href="/img/logo.png" type="image/png" />
+</head>
+
+<body class="admin-layout">
+  <main class="admin-content">
+    <header class="admin-topbar">
+      <div>
+        <h1 class="admin-page-title">Monitoring</h1>
+        <p class="admin-page-subtitle">Data sensor real-time tanpa refresh halaman</p>
+      </div>
+      <div class="admin-topbar-right">
+        <div class="status-badge" id="connectionBadge">
+          <span class="status-dot"></span>
+          <span id="connectionText">Live</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-body">
+      <div class="monitor-cards">
+        <!-- RGB Sensor -->
+        <div class="monitor-card">
+          <div class="monitor-card-header">
+            <span class="monitor-label">Sensor RGB</span>
+            <div class="rgb-swatch" id="rgbSwatch"></div>
+          </div>
+          <div class="rgb-values">
+            <div class="rgb-value"><span class="rgb-dot rgb-dot-r"></span><span class="rgb-key">R</span><span
+                class="rgb-num" id="valR">--</span></div>
+            <div class="rgb-value"><span class="rgb-dot rgb-dot-g"></span><span class="rgb-key">G</span><span
+                class="rgb-num" id="valG">--</span></div>
+            <div class="rgb-value"><span class="rgb-dot rgb-dot-b"></span><span class="rgb-key">B</span><span
+                class="rgb-num" id="valB">--</span></div>
+          </div>
+        </div>
+
+        <!-- Load Cell -->
+        <div class="monitor-card">
+          <div class="monitor-card-header">
+            <span class="monitor-label">Berat (Load Cell)</span>
+            <div class="monitor-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M6 7h12l1.5 13a2 2 0 0 1-2 2.2H6.5A2 2 0 0 1 4.5 20L6 7Z" stroke="currentColor"
+                  stroke-width="1.8" stroke-linejoin="round" />
+                <path d="M9 7a3 3 0 1 1 6 0" stroke="currentColor" stroke-width="1.8" />
+              </svg>
+            </div>
+          </div>
+          <p class="monitor-value"><span id="valWeight">0.0</span><span class="monitor-unit">gram</span></p>
+          <p class="monitor-sub">Pembacaan sensor terkini</p>
+        </div>
+
+        <!-- Klasifikasi -->
+        <div class="monitor-card">
+          <div class="monitor-card-header">
+            <span class="monitor-label">Klasifikasi</span>
+            <div class="monitor-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+                <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+          <span class="classification-badge" id="classificationBadge">MENUNGGU</span>
+          <p class="monitor-sub">Hasil klasifikasi sistem</p>
+        </div>
+
+        <!-- Status Sensor -->
+        <div class="monitor-card">
+          <div class="monitor-card-header">
+            <span class="monitor-label">Status Sensor</span>
+            <div class="monitor-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M2 12h4l2 7 4-14 2 7h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+          <div class="sensor-status-list">
+            <div class="sensor-status-item">
+              <span class="sensor-status-dot sensor-status-online" id="dotRgb"></span>
+              <span>Sensor RGB</span>
+              <span class="sensor-status-text" id="statusRgb">Online</span>
+            </div>
+            <div class="sensor-status-item">
+              <span class="sensor-status-dot sensor-status-online" id="dotLoadcell"></span>
+              <span>Load Cell</span>
+              <span class="sensor-status-text" id="statusLoadcell">Online</span>
+            </div>
+            <div class="sensor-status-item">
+              <span class="sensor-status-dot sensor-status-online" id="dotServer"></span>
+              <span>Koneksi Server</span>
+              <span class="sensor-status-text" id="statusServer">Terhubung</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Log -->
+      <div class="log-card">
+        <div class="log-card-header">
+          <svg class="log-title-icon" viewBox="0 0 24 24" fill="none">
+            <path d="m4 17 6-5-6-5M12 19h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <h3>Log Aktivitas Real-Time</h3>
+          <span class="log-live-indicator"><span class="status-dot"></span> LIVE</span>
+        </div>
+        <div class="log-list log-list-tall" id="liveLogList">
+          <p class="log-item log-item-empty">Menunggu data sensor...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script>Auth.requireLogin();</script>
+  <script src="/js/admin-layout.js"></script>
+  <script src="/js/monitoring.js"></script>
+</body>
+
+</html>
