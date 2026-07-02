@@ -3,19 +3,45 @@
 // =============================================
 // Poll endpoint API Gateway setiap beberapa detik dan update UI.
 //
-// Format response JSON dari /api/sensor-warna/latest:
-// {
-//   "weight": 12.5,
-//   "wadah": "MATANG",
-//   "classification": "MATANG",
-//   "sensorWarna": "MERAH",
-//   "berat_matang": 45.2,
-//   "berat_mentah": 31.0,
-//   "total_matang": 12,
-//   "total_mentah": 8,
-//   "sensors": { "rgb": true, "loadcell": true, "server": true },
-//   "timestamp": "2026-06-20T14:20:05"
-// }
+// FIX (Juli 2026): setelah backend dipecah jadi microservice
+// (sensor-warna-service & sensor-berat-service masing-masing
+// dengan database sendiri), TIDAK ADA LAGI satu endpoint yang
+// mengembalikan data gabungan warna + berat. Jadi sekarang kita
+// panggil 3 endpoint sekaligus dan gabung hasilnya di sini:
+//
+//   GET /api/sensor-warna/latest
+//   {
+//     "id": 3,
+//     "sensorWarna": "MERAH",
+//     "hasilKlasifikasi": "MATANG",
+//     "timestamp": "2026-07-01T14:28:08.916374261"
+//   }
+//
+//   GET /api/sensor-berat/latest
+//   {
+//     "id": 3,
+//     "wadah": "MATANG",
+//     "berat": 221.5,
+//     "satuan": "gram",
+//     "timestamp": "2026-07-01T14:28:31.274381544"
+//   }
+//
+//   GET /api/sensor-berat/stats   (sudah ada di backend, tinggal dipakai)
+//   {
+//     "total": 3,
+//     "total_matang": 2,
+//     "total_mentah": 1,
+//     "berat_matang": 221.5,
+//     "berat_mentah": 90.0,
+//     "rata_rata_gram": ...,
+//     "max_gram": ...
+//   }
+//
+// Catatan: karena sensor warna & sensor berat sekarang jalan
+// independen (microservice terpisah, tidak ada transaksi bersama),
+// timestamp "latest" dari keduanya bisa sedikit berbeda — itu
+// konsekuensi wajar dari arsitektur microservice yang
+// terdesentralisasi, bukan bug.
 
 (function () {
   // Ambil refresh interval dari localStorage (halaman Setting)
@@ -172,18 +198,73 @@
     }
   }
 
-  async function fetchData() {
-    try {
-      const res = await Auth.apiFetch('/api/sensor-warna/latest');
-      if (!res || !res.ok) throw new Error('HTTP ' + (res ? res.status : '?'));
-      const data = await res.json();
-      setConnectionState(true);
-      updateUI(data);
-    } catch (err) {
-      console.warn('[monitoring] fetch error:', err.message);
-      setConnectionState(false);
-      setSensorStatus(dotServer, statusServer, false, 'Terhubung', 'Putus');
+  // Ambil JSON dari hasil Promise.allSettled dengan aman.
+  // Mengembalikan null kalau request gagal, response bukan 2xx,
+  // atau body kosong (mis. 204 No Content saat data belum ada).
+  async function safeJson(settled, label) {
+    if (settled.status !== 'fulfilled') {
+      console.warn(`[monitoring] ${label} gagal:`, settled.reason);
+      return null;
     }
+    const res = settled.value;
+    if (!res) return null;
+    if (res.status === 204) return null;
+    if (!res.ok) {
+      console.warn(`[monitoring] ${label} HTTP ${res.status}`);
+      return null;
+    }
+    try {
+      return await res.json();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function fetchData() {
+    const [warnaSettled, beratSettled, beratStatsSettled] = await Promise.allSettled([
+      Auth.apiFetch('/api/sensor-warna/latest'),
+      Auth.apiFetch('/api/sensor-berat/latest'),
+      Auth.apiFetch('/api/sensor-berat/stats'),
+    ]);
+
+    const warnaData = await safeJson(warnaSettled, 'sensor-warna/latest');
+    const beratData = await safeJson(beratSettled, 'sensor-berat/latest');
+    const statsData = await safeJson(beratStatsSettled, 'sensor-berat/stats');
+
+    const rgbOnline = warnaData !== null;
+    const loadcellOnline = beratData !== null;
+    const serverOnline = rgbOnline || loadcellOnline;
+
+    setConnectionState(serverOnline);
+
+    if (!serverOnline) {
+      setSensorStatus(dotServer, statusServer, false, 'Terhubung', 'Putus');
+      return;
+    }
+
+    // Timestamp "terbaru" dipakai buat trigger log baru: ambil yang
+    // paling akhir di antara warna & berat, karena keduanya independen.
+    const warnaTs = warnaData ? warnaData.timestamp : null;
+    const beratTs = beratData ? beratData.timestamp : null;
+    const latestTs =
+      warnaTs && beratTs
+        ? (warnaTs > beratTs ? warnaTs : beratTs)
+        : (warnaTs || beratTs);
+
+    const merged = {
+      classification: warnaData ? warnaData.hasilKlasifikasi : null,
+      sensorWarna: warnaData ? warnaData.sensorWarna : null,
+      weight: beratData ? beratData.berat : null,
+      wadah: beratData ? beratData.wadah : null,
+      berat_matang: statsData ? statsData.berat_matang : 0,
+      berat_mentah: statsData ? statsData.berat_mentah : 0,
+      total_matang: statsData ? statsData.total_matang : 0,
+      total_mentah: statsData ? statsData.total_mentah : 0,
+      timestamp: latestTs,
+      sensors: { rgb: rgbOnline, loadcell: loadcellOnline, server: serverOnline },
+    };
+
+    updateUI(merged);
   }
 
   // Mulai polling

@@ -14,6 +14,11 @@ WORKDIR /app
 RUN apk add --no-cache curl
 
 COPY --from=build /app/target/*.jar app.jar
+
+# H2 file-based database lives here (persisted via Docker volume)
+RUN mkdir -p /app/data
+VOLUME ["/app/data"]
+
 EXPOSE 8082
 
 # FIX: pakai sh -c agar JAVA_OPTS env variable terbaca oleh JVM

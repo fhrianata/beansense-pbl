@@ -1,7 +1,18 @@
 # ================================================================
-# BeanSense — docker-compose.yml  (FIXED v3)
+# BeanSense — docker-compose.yml  (FIXED v4 — H2 per-service DB)
 #
-# FIX v3:
+# FIX v4:
+# - MySQL (satu database bersama) DIHAPUS sepenuhnya.
+# - auth-service, sensor-berat-service, sensor-warna-service sekarang
+#   masing-masing punya H2 file database SENDIRI (prinsip
+#   "database per service" pada microservice architecture yang benar).
+# - Tiap service database disimpan di named volume terpisah
+#   (auth-db-data, sensor-berat-db-data, sensor-warna-db-data) supaya
+#   data tetap ada walau container di-restart/rebuild.
+# - mysql/beansense.sql sudah tidak dipakai lagi oleh docker-compose
+#   (dibiarkan di folder mysql/ sebagai referensi/backup saja).
+#
+# FIX v3 (masih berlaku):
 # - Eureka healthcheck: ganti wget → curl (wget tidak ada di temurin-alpine)
 # - Semua Dockerfile service: ENTRYPOINT pakai sh -c agar JAVA_OPTS dibaca
 # - LOGSTASH_HOST di-set "localhost" agar LogstashAppender tidak coba
@@ -11,19 +22,27 @@
 # - depends_on api-gateway dan semua service → service_healthy (bukan started)
 # - es-data volume dihapus dari default (hanya dipakai profile elk)
 #
-# Struktur folder (BARU):
-#   beansense-backend-fixed/
+# Struktur folder:
+#   beansense-backend/
 #     nginx/Dockerfile  nginx/nginx.conf
 #     web/css/  web/html/  web/js/  web/img/  web/fonts/
-#     mysql/beansense.sql
+#     mysql/beansense.sql          (legacy, tidak dipakai lagi)
 #     monitoring/...
-#     eureka/  api-gateway/  auth-service/  dst.
+#     eureka/  api-gateway/  auth-service/  sensor-berat-service/
+#     sensor-warna-service/  notification-service/
 #
 # CARA PAKAI — WAJIB reset volume saat pertama kali:
 #   docker compose down -v
 #   docker compose up -d --build
 #
-# Login  : admin / admin123
+# Login  : admin / admin123   (auto-seed oleh DataSeeder saat DB kosong)
+# H2 console tiap service (opsional, untuk cek data):
+#   auth-service          : http://localhost:8082/h2-console
+#   sensor-berat-service  : http://localhost:8085/h2-console
+#   sensor-warna-service  : http://localhost:8083/h2-console
+#   JDBC URL   : jdbc:h2:file:/app/data/<authdb|sensorberatdb|sensorwarnadb>
+#   Username   : sa
+#   Password   : (kosong)
 # Grafana: http://localhost:3000  (admin / admin)
 # Eureka : http://localhost:8761
 # ================================================================
@@ -33,38 +52,21 @@ networks:
     driver: bridge
 
 volumes:
-  mysql-data:
   prometheus-data:
   grafana-data:
+  auth-db-data:
+  sensor-berat-db-data:
+  sensor-warna-db-data:
 
 services:
 
   # ============================================================
   # DATABASE
+  # Setiap service punya H2 file database sendiri (disimpan di
+  # named volume masing-masing) — tidak ada lagi satu MySQL yang
+  # dipakai bersama. Ini menerapkan prinsip "database per service"
+  # pada arsitektur microservice yang benar.
   # ============================================================
-  mysql:
-    image: mysql:8.0
-    container_name: mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: bean123
-      MYSQL_DATABASE: beansense
-      TZ: Asia/Jakarta
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-      - ./mysql/beansense.sql:/docker-entrypoint-initdb.d/beansense.sql:ro
-    networks:
-      - beansense-net
-    mem_limit: 1g
-    memswap_limit: 1g
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -uroot -pbean123 --silent"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
 
   # ============================================================
   # EUREKA — Service Discovery
@@ -130,19 +132,17 @@ services:
     depends_on:
       eureka:
         condition: service_healthy
-      mysql:
-        condition: service_healthy
     environment:
       EUREKA_HOST: eureka
-      DB_HOST: mysql
-      DB_USERNAME: root
-      DB_PASSWORD: bean123
+      DB_PATH: /app/data/authdb
       LOGSTASH_HOST: localhost
       JWT_SECRET: beansense-rahasia-jwt-kopi-sensor-iot-2026-jangan-disebar
       TZ: Asia/Jakarta
       JAVA_OPTS: "-Xms64m -Xmx192m"
     ports:
       - "8082:8082"
+    volumes:
+      - auth-db-data:/app/data
     networks:
       - beansense-net
     mem_limit: 512m
@@ -158,19 +158,17 @@ services:
     depends_on:
       eureka:
         condition: service_healthy
-      mysql:
-        condition: service_healthy
     environment:
       EUREKA_HOST: eureka
-      DB_HOST: mysql
-      DB_USERNAME: root
-      DB_PASSWORD: bean123
+      DB_PATH: /app/data/sensorwarnadb
       LOGSTASH_HOST: localhost
       SENSOR_API_KEY: BEANSENSE123
       TZ: Asia/Jakarta
       JAVA_OPTS: "-Xms48m -Xmx128m"
     ports:
       - "8083:8083"
+    volumes:
+      - sensor-warna-db-data:/app/data
     networks:
       - beansense-net
     mem_limit: 384m
@@ -186,19 +184,17 @@ services:
     depends_on:
       eureka:
         condition: service_healthy
-      mysql:
-        condition: service_healthy
     environment:
       EUREKA_HOST: eureka
-      DB_HOST: mysql
-      DB_USERNAME: root
-      DB_PASSWORD: bean123
+      DB_PATH: /app/data/sensorberatdb
       LOGSTASH_HOST: localhost
       SENSOR_API_KEY: BEANSENSE123
       TZ: Asia/Jakarta
       JAVA_OPTS: "-Xms48m -Xmx128m"
     ports:
       - "8085:8085"
+    volumes:
+      - sensor-berat-db-data:/app/data
     networks:
       - beansense-net
     mem_limit: 384m
@@ -221,7 +217,7 @@ services:
       MAIL_PORT: 587
       MAIL_USERNAME: fachrianata1999@gmail.com
       MAIL_PASSWORD: etiymllapvprseyh
-      ADMIN_EMAIL: xenoblade1121@gmail.com
+      ADMIN_EMAIL: fachrianata123@gmail.com, jordiyt1999@gmail.com
       TZ: Asia/Jakarta
       JAVA_OPTS: "-Xms48m -Xmx128m"
     ports:
